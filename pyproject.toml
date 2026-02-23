@@ -1,0 +1,9 @@
+[project]
+name = "plex-tidal-sync"
+version = "0.1.0"
+description = "Sync Plex music library albums to Tidal favorites"
+requires-python = ">=3.11"
+dependencies = [
+    "plexapi>=4.15",
+    "tidalapi>=0.8",
+]
