@@ -72,14 +72,19 @@ Medium confidence matches are added but tagged `[medium confidence]` in the log.
 
 On the Tidal result, check both artist name and album title match (case-insensitive, partial match acceptable via `names_match`).
 
+Exact vs partial match (after normalization):
+- **Exact match**: added automatically
+- **Partial match**: user is prompted `Add '...'? [y/N]` before adding; default is N
+
 ### Artists
-Match by artist name only (simpler — no two-source check needed).
+Match by artist name only (simpler — no two-source check needed). Same exact/partial confirmation applies.
 
 ## Behaviour
 
 - `--dry-run`: print what would be added without touching Tidal
 - `--no-albums` / `--no-artists`: skip either sync type
-- Log clearly: ADDED / NOT FOUND / MEDIUM CONFIDENCE warnings
+- Log clearly: ADDED / SKIPPED / NOT FOUND / MEDIUM CONFIDENCE warnings
+- Partial Tidal matches require interactive confirmation (`[y/N]`, default N); dry-run shows `[partial match — will confirm]` tag instead
 - 0.2s delay between Tidal API calls (rate limiting)
 - Tidal favorites paginated at 50 per call
 

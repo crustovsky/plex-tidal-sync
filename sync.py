@@ -68,6 +68,17 @@ def names_match(a: str, b: str) -> bool:
     return a_n in b_n or b_n in a_n
 
 
+def exact_match(a: str, b: str) -> bool:
+    """True if two names are identical after normalization."""
+    return normalize(a) == normalize(b)
+
+
+def confirm(prompt: str) -> bool:
+    """Ask user for y/N confirmation. Returns True only on 'y' or 'yes'."""
+    answer = input(f"{prompt} [y/N]: ").strip().lower()
+    return answer in ("y", "yes")
+
+
 # --- Plex auth ---
 
 def _plex_pin_login(config: dict) -> tuple[str, dict]:
@@ -315,7 +326,10 @@ def sync_albums(
             already_have += 1
             continue
 
-        tidal_label = f"{match.artist.name if match.artist else '?'} — {match.name}"
+        tidal_artist = match.artist.name if match.artist else "?"
+        is_exact = exact_match(search_artist, tidal_artist) and exact_match(search_album, match.name)
+
+        tidal_label = f"{tidal_artist} — {match.name}"
         local_label = f"{search_artist} — {search_album}"
         display = local_label
         if normalize(local_label) != normalize(tidal_label):
@@ -324,8 +338,12 @@ def sync_albums(
             display += "  [medium confidence]"
 
         if dry_run:
-            log.info(f"[DRY RUN] Would add album: {display}")
+            tag = "" if is_exact else "  [partial match — will confirm]"
+            log.info(f"[DRY RUN] Would add album: {display}{tag}")
         else:
+            if not is_exact and not confirm(f"  Add album '{tidal_label}'?"):
+                log.info(f"SKIPPED:    {display}")
+                continue
             if favorites.add_album(str(match.id)):
                 log.info(f"ADDED:      {display}")
                 existing_ids.add(match.id)
@@ -385,13 +403,19 @@ def sync_artists(
             already_have += 1
             continue
 
+        is_exact = exact_match(name, match.name)
+
         display = name
         if normalize(name) != normalize(match.name):
             display += f"  [Tidal: {match.name}]"
 
         if dry_run:
-            log.info(f"[DRY RUN] Would add artist: {display}")
+            tag = "" if is_exact else "  [partial match — will confirm]"
+            log.info(f"[DRY RUN] Would add artist: {display}{tag}")
         else:
+            if not is_exact and not confirm(f"  Add artist '{match.name}'?"):
+                log.info(f"SKIPPED:    {display}")
+                continue
             if favorites.add_artist(str(match.id)):
                 log.info(f"ADDED:      {display}")
                 existing_ids.add(match.id)
